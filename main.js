@@ -13,6 +13,9 @@ const COLLAPSED_HEIGHT = 58;
 const EXPANDED_WIDTH = 400;
 const EXPANDED_HEIGHT = 650;
 
+// Set proper Application ID for Windows taskbar icon binding
+app.setAppUserModelId('com.ambientfocus.overlay');
+
 function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
@@ -20,6 +23,7 @@ function createWindow() {
   // Initial position: Top right near notification area
   const initialX = screenWidth - EXPANDED_WIDTH - 24;
   const initialY = 24;
+  const iconPath = path.join(__dirname, 'icon.png');
 
   mainWindow = new BrowserWindow({
     width: EXPANDED_WIDTH,
@@ -28,10 +32,13 @@ function createWindow() {
     y: initialY,
     frame: false,
     transparent: true,
-    resizable: false,
+    resizable: true, // Allow user to freely resize smaller or larger
+    minWidth: 280,
+    minHeight: 380,
     alwaysOnTop: true,
     skipTaskbar: false,
     hasShadow: false,
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -118,6 +125,59 @@ function createWindow() {
         }
       });
     });
+  });
+
+  // Save note & task markdown into Obsidian Vault (D:\Documents\theme pages\theme pages)
+  ipcMain.handle('save-obsidian-note', async (event, { date, content, tasks }) => {
+    try {
+      const vaultPath = 'D:\\Documents\\theme pages\\theme pages';
+      if (!fs.existsSync(vaultPath)) {
+        fs.mkdirSync(vaultPath, { recursive: true });
+      }
+
+      // Create a dedicated folder for overlay daily notes
+      const notesDir = path.join(vaultPath, 'Daily Focus Logs');
+      if (!fs.existsSync(notesDir)) {
+        fs.mkdirSync(notesDir, { recursive: true });
+      }
+
+      // Obsidian markdown with bidirectional link tags for graph view!
+      let md = `---
+date: ${date}
+tags:
+  - focus-log
+  - productivity
+  - overlay
+---
+
+# 🌿 Focus & Activity Log - ${date}
+
+[[my goal]] | [[solovibe code]] | [[FB pages]]
+
+## 📝 Quick Notes
+${content || '_No notes added today._'}
+
+## ✅ Tasks Log
+`;
+
+      if (tasks && tasks.length > 0) {
+        tasks.forEach(t => {
+          const check = t.completed ? 'x' : ' ';
+          const deadlineText = t.deadline ? ` (Due: ${t.deadline})` : '';
+          const mins = Math.round((t.timeSpent || 0) / 60);
+          md += `- [${check}] **${t.title}**${deadlineText} — _Focus: ${mins}m_\n`;
+        });
+      } else {
+        md += `_No tasks recorded for this date._\n`;
+      }
+
+      const filePath = path.join(notesDir, `${date}.md`);
+      fs.writeFileSync(filePath, md, 'utf-8');
+      return { success: true, path: filePath };
+    } catch (err) {
+      console.error('Obsidian sync error:', err);
+      return { success: false, error: err.message };
+    }
   });
 
   // Minimize to tray

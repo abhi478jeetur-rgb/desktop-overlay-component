@@ -178,7 +178,23 @@
         <!-- TAB 4: QUICK NOTES -->
         <div class="tab-pane" id="tabNotes">
           <div class="notes-container">
-            <textarea class="tactile-textarea" id="quickNotesArea" placeholder="Jot down quick thoughts, links, or ideas here... (Auto-saves continuously)"></textarea>
+            <!-- Color Picker & Obsidian Status -->
+            <div class="notes-toolbar">
+              <div class="note-color-options">
+                <span style="font-size: 10px; font-weight: 700; color: var(--text-muted); margin-right: 4px;">Theme:</span>
+                <button class="color-dot active" data-color="sage" style="background: #E4E0D5;" title="Classic Sage"></button>
+                <button class="color-dot" data-color="mint" style="background: #E2ECE9;" title="Mint Crisp"></button>
+                <button class="color-dot" data-color="cream" style="background: #FFF9E6;" title="Warm Cream"></button>
+                <button class="color-dot" data-color="lavender" style="background: #ECE6F0;" title="Soft Lavender"></button>
+                <button class="color-dot" data-color="peach" style="background: #FBEAE5;" title="Soft Peach"></button>
+              </div>
+
+              <div class="obsidian-status-badge" id="obsidianSyncStatus" title="Auto-synced to Obsidian: D:\Documents\theme pages">
+                💎 Obsidian Synced
+              </div>
+            </div>
+
+            <textarea class="tactile-textarea" id="quickNotesArea" placeholder="Write thoughts, daily reflections, links... (Synced directly to your Obsidian Vault)"></textarea>
           </div>
         </div>
       </div>

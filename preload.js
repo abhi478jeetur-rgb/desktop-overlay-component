@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAutostartStatus: () => ipcRenderer.invoke('get-autostart-status'),
   setAutostartStatus: (val) => ipcRenderer.invoke('set-autostart-status', val),
   checkActiveWindow: () => ipcRenderer.invoke('check-active-window'),
+  saveObsidianNote: (data) => ipcRenderer.invoke('save-obsidian-note', data),
   onWindowDrag: (mouseX, mouseY) => ipcRenderer.send('window-drag', { mouseX, mouseY })
 });

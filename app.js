@@ -578,12 +578,69 @@ navTabBtns.forEach(btn => {
   });
 });
 
-// Quick Notes Persistence
+// Quick Notes & Obsidian Vault Synchronization
+let obsidianSyncTimeout = null;
+const colorDots = document.querySelectorAll('.color-dot');
+const obsidianSyncStatus = document.getElementById('obsidianSyncStatus');
+
+// Load note theme
+const savedTheme = localStorage.getItem('ambient_note_theme') || 'sage';
+applyNoteTheme(savedTheme);
+
+colorDots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const theme = dot.getAttribute('data-color');
+    applyNoteTheme(theme);
+    localStorage.setItem('ambient_note_theme', theme);
+  });
+});
+
+function applyNoteTheme(theme) {
+  colorDots.forEach(d => {
+    d.classList.toggle('active', d.getAttribute('data-color') === theme);
+  });
+  quickNotesArea.className = `tactile-textarea theme-${theme}`;
+}
+
 quickNotesArea.value = state.notes || '';
 quickNotesArea.addEventListener('input', () => {
   state.notes = quickNotesArea.value;
   saveData();
+
+  // Debounced sync to Obsidian Daily Logs
+  if (obsidianSyncTimeout) clearTimeout(obsidianSyncTimeout);
+  obsidianSyncTimeout = setTimeout(() => {
+    syncWithObsidian();
+  }, 1200);
 });
+
+async function syncWithObsidian() {
+  if (!window.electronAPI || !window.electronAPI.saveObsidianNote) return;
+
+  const todayStr = getLocalDateString();
+  const currentTasks = state.tasks.filter(t => t.date === todayStr);
+
+  try {
+    obsidianSyncStatus.textContent = '⏳ Syncing...';
+    const res = await window.electronAPI.saveObsidianNote({
+      date: todayStr,
+      content: state.notes,
+      tasks: currentTasks
+    });
+
+    if (res && res.success) {
+      obsidianSyncStatus.textContent = '💎 Obsidian Synced';
+      obsidianSyncStatus.style.background = 'rgba(88, 129, 87, 0.2)';
+    } else {
+      obsidianSyncStatus.textContent = '⚠️ Sync Failed';
+    }
+  } catch (err) {
+    obsidianSyncStatus.textContent = '⚠️ Sync Error';
+  }
+}
+
+// Initial sync on startup
+setTimeout(syncWithObsidian, 2000);
 
 // Window Pin Mode
 btnPinTop.addEventListener('click', () => {

@@ -175,8 +175,8 @@ body {
   height: 100%;
   background: var(--surface-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-elevated);
-  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 24px rgba(28, 43, 36, 0.16);
+  border: 1px solid rgba(45, 74, 62, 0.18);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -936,6 +936,54 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.notes-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  background: var(--surface-inset);
+  box-shadow: var(--shadow-inset);
+  border-radius: var(--radius-pill);
+}
+
+.note-color-options {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.color-dot:hover {
+  transform: scale(1.2);
+}
+
+.color-dot.active {
+  border: 2px solid var(--primary-deep);
+  transform: scale(1.15);
+}
+
+.obsidian-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary-deep);
+  background: rgba(88, 129, 87, 0.15);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .tactile-textarea {
@@ -951,11 +999,15 @@ body {
   outline: none;
   resize: none;
   line-height: 1.5;
+  transition: background 0.25s ease;
 }
 
-.tactile-textarea:focus {
-  background: var(--surface-card);
-}
+/* Note Color Themes */
+.tactile-textarea.theme-sage { background: #E4E0D5; }
+.tactile-textarea.theme-mint { background: #E2ECE9; }
+.tactile-textarea.theme-cream { background: #FFF9E6; }
+.tactile-textarea.theme-lavender { background: #ECE6F0; }
+.tactile-textarea.theme-peach { background: #FBEAE5; }
 
 /* FOOTER BAR */
 .card-footer {

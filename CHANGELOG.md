@@ -5,6 +5,14 @@ All notable changes to the Ambient Focus Overlay project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-14
+### Added
+- **Direct Obsidian Vault Integration**: Automatically synchronizes daily notes and completed tasks to your Obsidian vault (`D:\Documents\theme pages\theme pages\Daily Focus Logs\YYYY-MM-DD.md`) with bidirectional links (`[[my goal]]`, `[[solovibe code]]`, `[[FB pages]]`) for rich Graph View exploration.
+- **Multi-Color Note Themes**: Added color palette selector (Sage, Mint, Warm Cream, Lavender, Soft Peach) allowing custom styled notes.
+- **Clean Razor-Sharp Edges**: Removed blurry light/glow around the overlay window for a clean, safe, and crisp boundary.
+- **Resizable Compact Window**: Added free window resizing support (minimum width down to 280px) so the widget can be made significantly smaller and more compact on screen.
+- **Dedicated Desktop Launcher**: Created a permanent Windows Desktop shortcut (`Ambient Focus.lnk`) with the custom golden-star icon for 1-click launching anytime.
+
 ## [1.1.1] - 2026-10-14
 ### Added
 - **Interactive Task Edit Feature**: Added ✏️ edit button on every task item that opens an in-place tactile edit modal to change task title, scheduled date, and target deadline time without losing timer progress.
