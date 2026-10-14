@@ -64,8 +64,21 @@
       <div class="tab-content">
         <!-- TAB 1: TO-DO & STOPWATCH -->
         <div class="tab-pane active" id="tabTasks">
+          <!-- DATE NAVIGATION BAR (Browse Past, Today & Future) -->
+          <div class="date-navigator-bar">
+            <button class="tactile-date-arrow" id="btnPrevDay" title="Previous Day">‹</button>
+            <div class="date-current-display" id="dateCurrentDisplay">
+              <span class="date-badge" id="dateBadgeLabel">Today</span>
+              <span class="date-subtext" id="dateSubtextLabel">Wed, 14 Oct</span>
+            </div>
+            <button class="tactile-date-arrow" id="btnNextDay" title="Next Day">›</button>
+            <input type="date" id="calendarPickerInput" class="tactile-mini-calendar" title="Jump to date">
+          </div>
+
+          <!-- TASK INPUT WITH DUE TIME / DEADLINE -->
           <div class="task-input-bar">
-            <input type="text" class="tactile-input" id="newTaskInput" placeholder="Add a new task to conquer..." maxlength="60">
+            <input type="text" class="tactile-input" id="newTaskInput" placeholder="Add task for this date..." maxlength="60">
+            <input type="time" class="tactile-time-input" id="newTaskDeadline" title="Target completion deadline">
             <button class="tactile-btn-primary" id="btnAddTask">+</button>
           </div>
 
@@ -127,11 +140,19 @@
             <div class="setting-row">
               <span>Check-in Interval</span>
               <select class="tactile-select" id="selectInterval">
+                <option value="random" selected>🎲 Random Popups (5m - 12m)</option>
+                <option value="5">Rapid (Every 5 mins)</option>
                 <option value="15">Every 15 mins</option>
-                <option value="25" selected>Every 25 mins (Pomodoro)</option>
+                <option value="25">Every 25 mins (Pomodoro)</option>
                 <option value="45">Every 45 mins</option>
-                <option value="60">Every 60 mins</option>
               </select>
+            </div>
+
+            <div class="setting-row">
+              <span>Browser Guard (YT, Social)</span>
+              <div class="tactile-switch active" id="switchBrowserGuard" title="Alerts immediately when browsing YouTube, Facebook, Reels, etc.">
+                <div class="switch-thumb"></div>
+              </div>
             </div>
 
             <div class="setting-row">

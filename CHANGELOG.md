@@ -5,6 +5,14 @@ All notable changes to the Ambient Focus Overlay project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-14
+### Added
+- **Multi-Date History & Future Planning**: Date navigator with `‹` and `›` controls and calendar date picker to view past logs and schedule upcoming tasks.
+- **Overdue Red Flags (🚩)**: Automatic detection of tasks past their set deadline time with prominent red flag alert indicators.
+- **Random Timer Check-ins (5m - 12m)**: Configurable non-predictable check-in intervals to prevent procrastination.
+- **Active Browser Distraction Guard**: Native process and window monitor that detects when social/video sites (YouTube, Facebook, Instagram, Twitter, Netflix, etc.) are active during a focus block.
+- **Silent Windows Startup**: Created `Launch-Silent.vbs` and registered Windows startup shortcut for seamless zero-terminal autostart on boot.
+
 ## [1.0.0] - 2026-10-14
 ### Added
 - Initial release of Ambient Focus & Productivity Desktop Overlay.

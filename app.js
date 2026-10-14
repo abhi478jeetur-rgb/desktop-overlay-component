@@ -1,5 +1,5 @@
 // Ambient Focus Overlay - Core Logic Engine
-// Features: Task Manager, StopWatch/Timer, Heatmap, Accountability Reminders, Auto-Save
+// Features: Multi-Date Task Manager, Overdue Red Flags, Random Interval Reminders, Browser Distraction Guard
 
 const MOTIVATIONAL_QUOTES = [
   "Focus is a muscle. Every time you bring your attention back, you get stronger.",
@@ -10,24 +10,36 @@ const MOTIVATIONAL_QUOTES = [
   "Deep work creates high value. Lock in."
 ];
 
+// Helper to get local date string YYYY-MM-DD
+function getLocalDateString(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // State Store
 const state = {
+  selectedDate: getLocalDateString(), // Current date being viewed
   tasks: [],
   activeTaskId: null,
   activeTimerInterval: null,
   elapsedSeconds: 0,
-  history: {}, // date: 'YYYY-MM-DD' -> { count: number, minutes: number }
+  history: {}, // date -> { count: number, minutes: number }
   notes: '',
   distractionCount: 0,
-  reminderIntervalMinutes: 25,
+  reminderIntervalMode: 'random', // 'random' | '5' | '15' | '25' | '45'
+  reminderIntervalMinutes: 7, // Dynamic if random
   remindersEnabled: true,
+  browserGuardEnabled: true,
   lastReminderTimestamp: Date.now(),
   reminderCheckInterval: null,
+  browserCheckInterval: null,
   isExpanded: true,
-  pinMode: 'always-on-top' // 'always-on-top' | 'desktop'
+  pinMode: 'always-on-top'
 };
 
-// Elements
+// UI Elements
 const floatingPill = document.getElementById('floatingPill');
 const expandedCard = document.getElementById('expandedCard');
 const pillStatusDot = document.getElementById('pillStatusDot');
@@ -48,7 +60,15 @@ const btnGlobalStop = document.getElementById('btnGlobalStop');
 const navTabBtns = document.querySelectorAll('.nav-tab-btn');
 const tabPanes = document.querySelectorAll('.tab-pane');
 
+// Date Navigation Elements
+const btnPrevDay = document.getElementById('btnPrevDay');
+const btnNextDay = document.getElementById('btnNextDay');
+const dateBadgeLabel = document.getElementById('dateBadgeLabel');
+const dateSubtextLabel = document.getElementById('dateSubtextLabel');
+const calendarPickerInput = document.getElementById('calendarPickerInput');
+
 const newTaskInput = document.getElementById('newTaskInput');
+const newTaskDeadline = document.getElementById('newTaskDeadline');
 const btnAddTask = document.getElementById('btnAddTask');
 const taskList = document.getElementById('taskList');
 
@@ -59,6 +79,7 @@ const statStreakDays = document.getElementById('statStreakDays');
 
 const switchReminder = document.getElementById('switchReminder');
 const selectInterval = document.getElementById('selectInterval');
+const switchBrowserGuard = document.getElementById('switchBrowserGuard');
 const switchAutostart = document.getElementById('switchAutostart');
 const statDistractionCount = document.getElementById('statDistractionCount');
 const quickNotesArea = document.getElementById('quickNotesArea');
@@ -83,9 +104,9 @@ function formatTime(totalSec) {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-function getTodayKey() {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
+// Calculate random interval between 4 and 12 minutes
+function calculateNextRandomIntervalMinutes() {
+  return Math.floor(Math.random() * (12 - 4 + 1)) + 4;
 }
 
 // Local Storage Load & Save
@@ -98,28 +119,39 @@ function loadData() {
       if (parsed.history) state.history = parsed.history;
       if (parsed.notes !== undefined) state.notes = parsed.notes;
       if (parsed.distractionCount !== undefined) state.distractionCount = parsed.distractionCount;
-      if (parsed.reminderIntervalMinutes) state.reminderIntervalMinutes = parsed.reminderIntervalMinutes;
+      if (parsed.reminderIntervalMode) state.reminderIntervalMode = parsed.reminderIntervalMode;
       if (parsed.remindersEnabled !== undefined) state.remindersEnabled = parsed.remindersEnabled;
+      if (parsed.browserGuardEnabled !== undefined) state.browserGuardEnabled = parsed.browserGuardEnabled;
       if (parsed.pinMode) state.pinMode = parsed.pinMode;
     }
   } catch (e) {
     console.error('Failed to load storage', e);
   }
 
-  // Pre-fill default sample tasks if empty
+  const today = getLocalDateString();
+  // Ensure default tasks if empty
   if (!state.tasks || state.tasks.length === 0) {
     state.tasks = [
-      { id: '1', title: 'Plan key priority tasks', completed: true, timeSpent: 720 },
-      { id: '2', title: 'Deep focus coding block', completed: false, timeSpent: 1450 },
-      { id: '3', title: 'Review pull requests & notes', completed: false, timeSpent: 0 }
+      { id: '1', title: 'Plan key priority tasks', date: today, deadline: '12:00', completed: true, timeSpent: 720 },
+      { id: '2', title: 'Deep focus coding block', date: today, deadline: '16:00', completed: false, timeSpent: 1450 },
+      { id: '3', title: 'Review pull requests & notes', date: today, deadline: '18:30', completed: false, timeSpent: 0 }
     ];
+  } else {
+    // Migration: ensure every task has a date field
+    state.tasks.forEach(t => {
+      if (!t.date) t.date = today;
+    });
   }
 
   // Ensure today's history entry exists
-  const today = getTodayKey();
   if (!state.history[today]) {
     state.history[today] = { count: 1, minutes: 12 };
   }
+
+  // Sync settings UI
+  if (selectInterval) selectInterval.value = state.reminderIntervalMode || 'random';
+  if (switchReminder) switchReminder.classList.toggle('active', state.remindersEnabled);
+  if (switchBrowserGuard) switchBrowserGuard.classList.toggle('active', state.browserGuardEnabled);
 }
 
 function saveData() {
@@ -129,8 +161,9 @@ function saveData() {
       history: state.history,
       notes: state.notes,
       distractionCount: state.distractionCount,
-      reminderIntervalMinutes: state.reminderIntervalMinutes,
+      reminderIntervalMode: state.reminderIntervalMode,
       remindersEnabled: state.remindersEnabled,
+      browserGuardEnabled: state.browserGuardEnabled,
       pinMode: state.pinMode
     }));
   } catch (e) {
@@ -138,13 +171,89 @@ function saveData() {
   }
 }
 
-// Render Tasks
+// Date Navigation Controller
+function updateDateDisplay() {
+  const todayStr = getLocalDateString();
+  const selected = state.selectedDate;
+
+  // Format date readable
+  const [y, m, d] = selected.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  const options = { weekday: 'short', day: 'numeric', month: 'short' };
+  dateSubtextLabel.textContent = dateObj.toLocaleDateString('en-US', options);
+
+  // Badge label
+  dateBadgeLabel.className = 'date-badge';
+  if (selected === todayStr) {
+    dateBadgeLabel.textContent = 'Today';
+  } else if (selected < todayStr) {
+    dateBadgeLabel.textContent = 'Past';
+    dateBadgeLabel.classList.add('past');
+  } else {
+    dateBadgeLabel.textContent = 'Future';
+    dateBadgeLabel.classList.add('future');
+  }
+
+  calendarPickerInput.value = selected;
+  renderTasks();
+}
+
+function changeDateByOffset(offsetDays) {
+  const [y, m, d] = state.selectedDate.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  dateObj.setDate(dateObj.getDate() + offsetDays);
+  state.selectedDate = getLocalDateString(dateObj);
+  updateDateDisplay();
+}
+
+btnPrevDay.addEventListener('click', () => changeDateByOffset(-1));
+btnNextDay.addEventListener('click', () => changeDateByOffset(1));
+calendarPickerInput.addEventListener('change', (e) => {
+  if (e.target.value) {
+    state.selectedDate = e.target.value;
+    updateDateDisplay();
+  }
+});
+
+// Check if a task is overdue (past deadline and not completed)
+function isTaskOverdue(task) {
+  if (task.completed) return false;
+  const todayStr = getLocalDateString();
+  if (task.date < todayStr) return true; // Past day unfinished task
+
+  if (task.date === todayStr && task.deadline) {
+    const [deadH, deadM] = task.deadline.split(':').map(Number);
+    const now = new Date();
+    const currH = now.getHours();
+    const currM = now.getMinutes();
+    if (currH > deadH || (currH === deadH && currM > deadM)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Render Tasks for currently selected date
 function renderTasks() {
   taskList.innerHTML = '';
-  state.tasks.forEach(task => {
+  const filtered = state.tasks.filter(t => t.date === state.selectedDate);
+
+  if (filtered.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.style.cssText = 'padding: 24px 10px; text-align: center; color: var(--text-muted); font-size: 12px; font-weight: 600;';
+    emptyMsg.textContent = state.selectedDate > getLocalDateString() 
+      ? 'No tasks scheduled yet. Add tasks above to plan ahead!' 
+      : 'No tasks recorded for this day.';
+    taskList.appendChild(emptyMsg);
+    return;
+  }
+
+  filtered.forEach(task => {
     const isRunning = state.activeTaskId === task.id;
+    const overdue = isTaskOverdue(task);
+
     const item = document.createElement('div');
-    item.className = `task-item ${task.completed ? 'completed' : ''} ${isRunning ? 'running' : ''}`;
+    item.className = `task-item ${task.completed ? 'completed' : ''} ${isRunning ? 'running' : ''} ${overdue ? 'overdue' : ''}`;
     
     item.innerHTML = `
       <div class="task-left">
@@ -152,8 +261,13 @@ function renderTasks() {
           ✓
         </div>
         <div class="task-details">
-          <div class="task-label" title="${task.title}">${task.title}</div>
-          <div class="task-time-spent">${formatTime(task.timeSpent || 0)}</div>
+          <div class="task-label" title="${task.title}">
+            ${task.title}
+            ${overdue ? '<span class="overdue-badge">🚩 Overdue</span>' : ''}
+          </div>
+          <div class="task-time-spent">
+            ${task.deadline ? `Due: ${task.deadline} • ` : ''}${formatTime(task.timeSpent || 0)}
+          </div>
         </div>
       </div>
       <div class="task-actions">
@@ -169,25 +283,22 @@ function renderTasks() {
     taskList.appendChild(item);
   });
 
-  // Attach event listeners for check, start/stop, delete
+  // Attach event listeners
   taskList.querySelectorAll('.tactile-checkbox').forEach(box => {
     box.addEventListener('click', () => {
-      const id = box.getAttribute('data-id');
-      toggleTaskComplete(id);
+      toggleTaskComplete(box.getAttribute('data-id'));
     });
   });
 
   taskList.querySelectorAll('.task-btn-timer').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      toggleTimer(id);
+      toggleTimer(btn.getAttribute('data-id'));
     });
   });
 
   taskList.querySelectorAll('.task-btn-del').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      deleteTask(id);
+      deleteTask(btn.getAttribute('data-id'));
     });
   });
 }
@@ -201,13 +312,12 @@ function toggleTaskComplete(id) {
     stopActiveTimer();
   }
 
-  // Update today's history count
-  const today = getTodayKey();
-  if (!state.history[today]) state.history[today] = { count: 0, minutes: 0 };
+  const dateKey = task.date || getLocalDateString();
+  if (!state.history[dateKey]) state.history[dateKey] = { count: 0, minutes: 0 };
   if (task.completed) {
-    state.history[today].count += 1;
-  } else if (state.history[today].count > 0) {
-    state.history[today].count -= 1;
+    state.history[dateKey].count += 1;
+  } else if (state.history[dateKey].count > 0) {
+    state.history[dateKey].count -= 1;
   }
 
   saveData();
@@ -227,14 +337,20 @@ function deleteTask(id) {
 function addNewTask() {
   const title = newTaskInput.value.trim();
   if (!title) return;
+  const deadlineVal = newTaskDeadline.value || null;
+
   const newTask = {
     id: Date.now().toString(),
     title: title,
+    date: state.selectedDate,
+    deadline: deadlineVal,
     completed: false,
     timeSpent: 0
   };
+
   state.tasks.unshift(newTask);
   newTaskInput.value = '';
+  newTaskDeadline.value = '';
   saveData();
   renderTasks();
 }
@@ -263,15 +379,18 @@ function startTimer(id) {
   if (!task) return;
 
   state.lastReminderTimestamp = Date.now();
+  if (state.reminderIntervalMode === 'random') {
+    state.reminderIntervalMinutes = calculateNextRandomIntervalMinutes();
+  }
+
   updateRunningBanner(task.title, task.timeSpent || 0);
 
   state.activeTimerInterval = setInterval(() => {
     task.timeSpent = (task.timeSpent || 0) + 1;
     updateRunningBanner(task.title, task.timeSpent);
 
-    // Add minutes to today's stats every 60 seconds
     if (task.timeSpent % 60 === 0) {
-      const today = getTodayKey();
+      const today = getLocalDateString();
       if (!state.history[today]) state.history[today] = { count: 0, minutes: 0 };
       state.history[today].minutes += 1;
       saveData();
@@ -313,19 +432,18 @@ function updateRunningBanner(title, seconds) {
 
 btnGlobalStop.addEventListener('click', stopActiveTimer);
 
-// GitHub Contribution Heatmap Generator (Past 18 weeks = ~126 days)
+// GitHub Contribution Heatmap
 function renderStatsAndHeatmap() {
-  const today = getTodayKey();
+  const today = getLocalDateString();
   const todayData = state.history[today] || { count: 0, minutes: 0 };
   statCompletedToday.textContent = todayData.count;
   statFocusMinutes.textContent = `${todayData.minutes}m`;
   statDistractionCount.textContent = `${state.distractionCount} times`;
 
-  // Calculate day streak
   let streak = 0;
   let curr = new Date();
   while (true) {
-    const key = curr.toISOString().split('T')[0];
+    const key = getLocalDateString(curr);
     if (state.history[key] && (state.history[key].count > 0 || state.history[key].minutes > 0)) {
       streak++;
       curr.setDate(curr.getDate() - 1);
@@ -335,7 +453,6 @@ function renderStatsAndHeatmap() {
   }
   statStreakDays.textContent = `${Math.max(1, streak)}d`;
 
-  // Generate 18 columns of 7 days (126 days total)
   heatmapGrid.innerHTML = '';
   const totalDays = 18 * 7;
   const startDate = new Date();
@@ -344,13 +461,22 @@ function renderStatsAndHeatmap() {
   for (let i = 0; i < totalDays; i++) {
     const cellDate = new Date(startDate);
     cellDate.setDate(startDate.getDate() + i);
-    const dateKey = cellDate.toISOString().split('T')[0];
+    const dateKey = getLocalDateString(cellDate);
 
     const data = state.history[dateKey] || { count: 0, minutes: 0 };
     const level = getActivityLevel(data.count, data.minutes);
 
     const cell = document.createElement('div');
     cell.className = `heatmap-cell cell-level-${level}`;
+    cell.title = `Click to view ${dateKey}`;
+
+    // Clicking a heatmap cell navigates to that date!
+    cell.addEventListener('click', () => {
+      state.selectedDate = dateKey;
+      updateDateDisplay();
+      // switch to tasks tab
+      document.querySelector('[data-tab="tabTasks"]').click();
+    });
 
     const tooltip = document.createElement('div');
     tooltip.className = 'cell-tooltip';
@@ -393,7 +519,7 @@ quickNotesArea.addEventListener('input', () => {
   saveData();
 });
 
-// Window Pin Mode (Overlay Top vs Desktop Pin)
+// Window Pin Mode
 btnPinTop.addEventListener('click', () => {
   state.pinMode = 'always-on-top';
   btnPinTop.classList.add('active');
@@ -450,7 +576,19 @@ switchReminder.addEventListener('click', () => {
 });
 
 selectInterval.addEventListener('change', () => {
-  state.reminderIntervalMinutes = parseInt(selectInterval.value, 10);
+  const val = selectInterval.value;
+  state.reminderIntervalMode = val;
+  if (val === 'random') {
+    state.reminderIntervalMinutes = calculateNextRandomIntervalMinutes();
+  } else {
+    state.reminderIntervalMinutes = parseInt(val, 10);
+  }
+  saveData();
+});
+
+switchBrowserGuard.addEventListener('click', () => {
+  state.browserGuardEnabled = !state.browserGuardEnabled;
+  switchBrowserGuard.classList.toggle('active', state.browserGuardEnabled);
   saveData();
 });
 
@@ -480,21 +618,50 @@ function startAccountabilityEngine() {
     const now = Date.now();
 
     if (now - state.lastReminderTimestamp >= intervalMs) {
-      triggerReminderPopup();
+      triggerReminderPopup("Time Check-in");
       state.lastReminderTimestamp = now;
+
+      // Pick next random interval if in random mode
+      if (state.reminderIntervalMode === 'random') {
+        state.reminderIntervalMinutes = calculateNextRandomIntervalMinutes();
+      }
     }
   }, 10000); // Check every 10 seconds
 }
 
-function triggerReminderPopup() {
+// Browser Window Distraction Guard Loop
+let lastDistractionAlert = 0;
+function startBrowserGuardEngine() {
+  if (state.browserCheckInterval) clearInterval(state.browserCheckInterval);
+
+  state.browserCheckInterval = setInterval(async () => {
+    if (!state.browserGuardEnabled || !state.activeTaskId || !window.electronAPI) return;
+
+    try {
+      const winInfo = await window.electronAPI.checkActiveWindow();
+      if (winInfo && winInfo.is_distracted) {
+        const now = Date.now();
+        // Cooldown of 45 seconds between distraction triggers
+        if (now - lastDistractionAlert > 45000) {
+          lastDistractionAlert = now;
+          triggerReminderPopup(`⚠️ Distraction Detected (${winInfo.keyword || 'Social/Video'})`);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, 5000); // Check every 5 seconds
+}
+
+function triggerReminderPopup(customHeader = "Mindful Check-in") {
   const task = state.tasks.find(t => t.id === state.activeTaskId);
   if (!task) return;
 
+  document.querySelector('.reminder-title').textContent = customHeader;
   reminderTaskName.textContent = task.title;
   modalQuoteReveal.style.display = 'none';
   reminderOverlay.style.display = 'flex';
 
-  // If window was collapsed, expand it so user sees prompt
   if (!state.isExpanded) {
     setExpanded(true);
   }
@@ -510,7 +677,6 @@ btnWasDistracted.addEventListener('click', () => {
   statDistractionCount.textContent = `${state.distractionCount} times`;
   saveData();
 
-  // Show motivational quote
   const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
   modalQuoteReveal.textContent = `"${randomQuote}"`;
   modalQuoteReveal.style.display = 'block';
@@ -529,8 +695,14 @@ function updateFooterClock() {
 setInterval(updateFooterClock, 1000);
 updateFooterClock();
 
+// Overdue checker loop every minute
+setInterval(() => {
+  renderTasks();
+}, 60000);
+
 // Initialize App
 loadData();
-renderTasks();
+updateDateDisplay();
 renderStatsAndHeatmap();
 startAccountabilityEngine();
+startBrowserGuardEngine();

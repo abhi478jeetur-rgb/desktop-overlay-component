@@ -100,6 +100,26 @@ function createWindow() {
     return app.getLoginItemSettings().openAtLogin;
   });
 
+  // Check active window for distractions (YouTube, Facebook, etc.)
+  ipcMain.handle('check-active-window', async () => {
+    return new Promise((resolve) => {
+      const scriptPath = path.join(__dirname, 'window_monitor.py');
+      const cp = require('child_process');
+      cp.exec(`python "${scriptPath}"`, { windowsHide: true }, (err, stdout) => {
+        if (err || !stdout) {
+          resolve({ title: '', process: '', is_distracted: false });
+          return;
+        }
+        try {
+          const parsed = JSON.parse(stdout.trim());
+          resolve(parsed);
+        } catch (e) {
+          resolve({ title: '', process: '', is_distracted: false });
+        }
+      });
+    });
+  });
+
   // Minimize to tray
   ipcMain.on('minimize-to-tray', () => {
     if (mainWindow) mainWindow.hide();

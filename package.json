@@ -1,6 +1,6 @@
 {
   "name": "ambient-desktop-overlay",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tactile Neumorphic Desktop Companion with To-Do, Focus Timer, Heatmap & Accountability Reminders",
   "main": "main.js",
   "scripts": {
