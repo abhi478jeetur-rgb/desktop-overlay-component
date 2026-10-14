@@ -1,0 +1,21 @@
+{
+  "name": "ambient-desktop-overlay",
+  "version": "1.0.0",
+  "description": "Tactile Neumorphic Desktop Companion with To-Do, Focus Timer, Heatmap & Accountability Reminders",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "productivity",
+    "desktop-widget",
+    "overlay",
+    "pomodoro",
+    "habit-tracker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.4.11"
+  }
+}

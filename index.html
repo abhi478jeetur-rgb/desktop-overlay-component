@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambient Focus Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container" id="appContainer">
+
+    <!-- 1. COMPACT FLOATING PILL (Collapsed State) -->
+    <div class="floating-pill" id="floatingPill" title="Click to expand productivity dashboard">
+      <div class="pill-status-dot" id="pillStatusDot"></div>
+      <div class="pill-info">
+        <div class="pill-task-title" id="pillTaskTitle">No active task</div>
+        <div class="pill-timer-val" id="pillTimerVal">00:00</div>
+      </div>
+      <button class="pill-expand-btn" id="pillExpandBtn" title="Expand">▾</button>
+    </div>
+
+    <!-- 2. EXPANDED DASHBOARD CARD -->
+    <div class="expanded-card" id="expandedCard">
+      <!-- HEADER -->
+      <div class="card-header">
+        <div class="brand-wrapper">
+          <div class="brand-badge">✦</div>
+          <div class="header-title-box">
+            <h1>Ambient Focus</h1>
+            <span>Daily Companion</span>
+          </div>
+        </div>
+
+        <div class="header-controls">
+          <button class="tactile-icon-btn active" id="btnPinTop" title="Always on top overlay">📌</button>
+          <button class="tactile-icon-btn" id="btnPinDesktop" title="Pin behind apps on desktop">🖥️</button>
+          <button class="tactile-icon-btn" id="btnCollapse" title="Collapse to floating icon">⎯</button>
+          <button class="tactile-icon-btn" id="btnClose" title="Close application">✕</button>
+        </div>
+      </div>
+
+      <!-- ACTIVE RUNNING FOCUS BAR WITH PROMINENT STOP BUTTON -->
+      <div class="active-focus-banner" id="activeFocusBanner">
+        <div class="focus-meta">
+          <span class="focus-badge">Focusing on</span>
+          <div class="focus-task-name" id="bannerTaskName">Task Name</div>
+        </div>
+        <div class="focus-timer-digits" id="bannerTimerDigits">00:00:00</div>
+        <button class="btn-stop-prominent" id="btnGlobalStop">STOP ⏹</button>
+      </div>
+
+      <!-- NAVIGATION TABS -->
+      <div class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="tabTasks">To-Do List</button>
+        <button class="nav-tab-btn" data-tab="tabHeatmap">Productivity</button>
+        <button class="nav-tab-btn" data-tab="tabFocus">Accountability</button>
+        <button class="nav-tab-btn" data-tab="tabNotes">Notes</button>
+      </div>
+
+      <!-- TAB CONTENT AREA -->
+      <div class="tab-content">
+        <!-- TAB 1: TO-DO & STOPWATCH -->
+        <div class="tab-pane active" id="tabTasks">
+          <div class="task-input-bar">
+            <input type="text" class="tactile-input" id="newTaskInput" placeholder="Add a new task to conquer..." maxlength="60">
+            <button class="tactile-btn-primary" id="btnAddTask">+</button>
+          </div>
+
+          <div class="task-list" id="taskList">
+            <!-- Dynamic task items injected via app.js -->
+          </div>
+        </div>
+
+        <!-- TAB 2: GITHUB HEATMAP & PRODUCTIVITY -->
+        <div class="tab-pane" id="tabHeatmap">
+          <div class="heatmap-container">
+            <div class="stats-summary-card">
+              <div class="stat-item">
+                <span class="stat-num" id="statCompletedToday">0</span>
+                <span class="stat-label">Done Today</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-num" id="statFocusMinutes">0m</span>
+                <span class="stat-label">Focus Time</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-num" id="statStreakDays">1</span>
+                <span class="stat-label">Day Streak</span>
+              </div>
+            </div>
+
+            <div class="heatmap-card">
+              <div class="heatmap-header">
+                <span class="heatmap-title">Contribution Grid (Past 18 Weeks)</span>
+                <div class="heatmap-legend">
+                  <span>Less</span>
+                  <div class="legend-cell cell-level-0"></div>
+                  <div class="legend-cell cell-level-1"></div>
+                  <div class="legend-cell cell-level-2"></div>
+                  <div class="legend-cell cell-level-3"></div>
+                  <div class="legend-cell cell-level-4"></div>
+                  <span>More</span>
+                </div>
+              </div>
+              <div class="heatmap-grid" id="heatmapGrid">
+                <!-- Heatmap cells generated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: ACCOUNTABILITY & REMINDERS -->
+        <div class="tab-pane" id="tabFocus">
+          <div class="accountability-box">
+            <span class="section-label">Mindful Focus Guard</span>
+            
+            <div class="setting-row">
+              <span>Nudge Reminder</span>
+              <div class="tactile-switch active" id="switchReminder">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <span>Check-in Interval</span>
+              <select class="tactile-select" id="selectInterval">
+                <option value="15">Every 15 mins</option>
+                <option value="25" selected>Every 25 mins (Pomodoro)</option>
+                <option value="45">Every 45 mins</option>
+                <option value="60">Every 60 mins</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <span>Auto-start on Boot</span>
+              <div class="tactile-switch active" id="switchAutostart">
+                <div class="switch-thumb"></div>
+              </div>
+            </div>
+
+            <div class="distraction-stat-card">
+              <span class="distraction-text">Times Drifted / Distracted:</span>
+              <span class="distraction-count" id="statDistractionCount">0 times</span>
+            </div>
+
+            <div class="quote-reveal" id="staticQuoteBox" style="display: block;">
+              "Small disciplines repeated with consistency every day lead to great achievements gained slowly over time."
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: QUICK NOTES -->
+        <div class="tab-pane" id="tabNotes">
+          <div class="notes-container">
+            <textarea class="tactile-textarea" id="quickNotesArea" placeholder="Jot down quick thoughts, links, or ideas here... (Auto-saves continuously)"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="card-footer">
+        <span id="footerStatus">Ready to focus</span>
+        <span id="footerClock">00:00</span>
+      </div>
+
+      <!-- POPUP REMINDER MODAL -->
+      <div class="reminder-overlay" id="reminderOverlay">
+        <div class="reminder-modal">
+          <div class="reminder-icon">🎯</div>
+          <div class="reminder-title">Mindful Check-in</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Are you still on track with:</div>
+          <div class="reminder-task-highlight" id="reminderTaskName">Task</div>
+
+          <div class="reminder-buttons">
+            <button class="btn-affirmative" id="btnStillOnTrack">Yes, on track! 🚀</button>
+            <button class="btn-distracted" id="btnWasDistracted">Got distracted 😅</button>
+          </div>
+
+          <div class="quote-reveal" id="modalQuoteReveal">
+            "It's okay to drift. What matters is catching yourself and returning with full heart."
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
