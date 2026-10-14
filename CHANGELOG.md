@@ -5,6 +5,11 @@ All notable changes to the Ambient Focus Overlay project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-10-14
+### Added
+- **Interactive Task Edit Feature**: Added ✏️ edit button on every task item that opens an in-place tactile edit modal to change task title, scheduled date, and target deadline time without losing timer progress.
+- **Upgraded Premium App Logo**: Designed and generated high-resolution neumorphic forest-sage icon (`icon.png` & `icon.ico`) with golden compass star emblem matching the app's aesthetic.
+
 ## [1.1.0] - 2026-10-14
 ### Added
 - **Multi-Date History & Future Planning**: Date navigator with `‹` and `›` controls and calendar date picker to view past logs and schedule upcoming tasks.

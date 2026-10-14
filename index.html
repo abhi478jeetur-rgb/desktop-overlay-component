@@ -27,7 +27,9 @@
       <!-- HEADER -->
       <div class="card-header">
         <div class="brand-wrapper">
-          <div class="brand-badge">✦</div>
+          <div class="brand-badge">
+            <img src="icon.png" alt="Logo" class="brand-logo-img">
+          </div>
           <div class="header-title-box">
             <h1>Ambient Focus</h1>
             <span>Daily Companion</span>
@@ -202,6 +204,37 @@
 
           <div class="quote-reveal" id="modalQuoteReveal">
             "It's okay to drift. What matters is catching yourself and returning with full heart."
+          </div>
+        </div>
+      </div>
+
+      <!-- EDIT TASK MODAL -->
+      <div class="reminder-overlay" id="editTaskModal">
+        <div class="reminder-modal" style="text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="reminder-title" style="margin: 0;">✏️ Edit Task Details</div>
+            <button class="task-btn-del" id="btnCloseEditModal" style="font-size: 14px;">✕</button>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Task Title</label>
+            <input type="text" class="tactile-input" id="editTaskTitleInput" maxlength="80">
+
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Date</label>
+                <input type="date" class="tactile-input" id="editTaskDateInput" style="width: 100%;">
+              </div>
+              <div style="width: 110px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Deadline</label>
+                <input type="time" class="tactile-input" id="editTaskDeadlineInput" style="width: 100%;">
+              </div>
+            </div>
+          </div>
+
+          <div class="reminder-buttons" style="margin-top: 10px;">
+            <button class="btn-affirmative" id="btnSaveEditedTask">Save Changes</button>
+            <button class="btn-distracted" id="btnCancelEditTask">Cancel</button>
           </div>
         </div>
       </div>

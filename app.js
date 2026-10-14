@@ -276,6 +276,7 @@ function renderTasks() {
             ${isRunning ? 'Pause ⏸' : 'Start ▶'}
           </button>
         ` : ''}
+        <button class="task-btn-edit" data-id="${task.id}" title="Edit task details">✏️</button>
         <button class="task-btn-del" data-id="${task.id}" title="Delete task">✕</button>
       </div>
     `;
@@ -293,6 +294,12 @@ function renderTasks() {
   taskList.querySelectorAll('.task-btn-timer').forEach(btn => {
     btn.addEventListener('click', () => {
       toggleTimer(btn.getAttribute('data-id'));
+    });
+  });
+
+  taskList.querySelectorAll('.task-btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openEditTaskModal(btn.getAttribute('data-id'));
     });
   });
 
@@ -358,6 +365,65 @@ function addNewTask() {
 btnAddTask.addEventListener('click', addNewTask);
 newTaskInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addNewTask();
+});
+
+// Edit Task Modal Logic
+let currentEditingTaskId = null;
+const editTaskModal = document.getElementById('editTaskModal');
+const editTaskTitleInput = document.getElementById('editTaskTitleInput');
+const editTaskDateInput = document.getElementById('editTaskDateInput');
+const editTaskDeadlineInput = document.getElementById('editTaskDeadlineInput');
+const btnCloseEditModal = document.getElementById('btnCloseEditModal');
+const btnSaveEditedTask = document.getElementById('btnSaveEditedTask');
+const btnCancelEditTask = document.getElementById('btnCancelEditTask');
+
+function openEditTaskModal(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (!task) return;
+
+  currentEditingTaskId = id;
+  editTaskTitleInput.value = task.title;
+  editTaskDateInput.value = task.date || getLocalDateString();
+  editTaskDeadlineInput.value = task.deadline || '';
+
+  editTaskModal.style.display = 'flex';
+  editTaskTitleInput.focus();
+}
+
+function closeEditTaskModal() {
+  currentEditingTaskId = null;
+  editTaskModal.style.display = 'none';
+}
+
+function saveEditedTask() {
+  if (!currentEditingTaskId) return;
+  const task = state.tasks.find(t => t.id === currentEditingTaskId);
+  if (!task) return;
+
+  const newTitle = editTaskTitleInput.value.trim();
+  if (newTitle) {
+    task.title = newTitle;
+  }
+  task.date = editTaskDateInput.value || task.date;
+  task.deadline = editTaskDeadlineInput.value || null;
+
+  // If this task was currently running, update the banner as well
+  if (state.activeTaskId === task.id) {
+    bannerTaskName.textContent = task.title;
+    pillTaskTitle.textContent = task.title;
+  }
+
+  saveData();
+  closeEditTaskModal();
+  renderTasks();
+}
+
+btnCloseEditModal.addEventListener('click', closeEditTaskModal);
+btnCancelEditTask.addEventListener('click', closeEditTaskModal);
+btnSaveEditedTask.addEventListener('click', saveEditedTask);
+editTaskTitleInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveEditedTask();
+  if (e.key === 'Escape') closeEditTaskModal();
 });
 
 // Timer Engine
